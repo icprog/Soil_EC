@@ -190,6 +190,8 @@ void USART2_IRQHandler(void)
 	tmp1 = __HAL_UART_GET_FLAG(&huart2, UART_FLAG_IDLE);   //空闲中断中将已收字节数取出后，停止DMA
 	tmp2 = __HAL_UART_GET_IT_SOURCE(&huart2, UART_IT_IDLE);
 			
+	printf("Irq\r\n");
+
 	if((tmp1 != RESET) && (tmp2 != RESET))
 	{ 
 		__HAL_UART_CLEAR_IDLEFLAG(&huart2);
@@ -197,6 +199,8 @@ void USART2_IRQHandler(void)
 		__HAL_DMA_DISABLE(&hdma_usart2_rx);
 
 		UART_RX_UART2.USART_RX_Len=(MAXSIZE)-(hdma_usart2_rx.Instance->CNDTR);
+		
+		printf("USART_RX_Len = %d CNDTR = %d\r\n",UART_RX_UART2.USART_RX_Len,hdma_usart2_rx.Instance->CNDTR);
 
 		__HAL_DMA_SET_COUNTER(&hdma_usart2_rx,MAXSIZE);
 		__HAL_DMA_ENABLE(&hdma_usart2_rx);

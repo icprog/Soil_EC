@@ -17,7 +17,7 @@
 	 
 void Rs485Init(void);
 	
-void Rs485RevceHandle(void);	 
+void Rs485RevceHandle(int16_t *SenSorBuf); 
 
 uint16_t CalcCRC16(uint8_t *data, uint8_t len);
 	 

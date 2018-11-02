@@ -276,6 +276,7 @@ uint16_t GetAdcVref(uint32_t Channel, uint8_t Counter)
 *电压计算公式：Vchannel = VDDA * ADC_DATA/FULL_SCALE
 *VDDA由内部基准电压得: = 3*VREFINT_CAL/VREFINT_DATA (VREFINT_CAL:校准值，VREFINT_DATA:ad17)
 *则电压计算公式为: Vchannel = (3*VREFINT_CAL*ADC_DATA)/(VREFINT_DATA*FULL_SCALE)
+**************************************************整个采集数据周期必须<4khz， 即必须在250us内完成，否则采集数据错误***************************************
 */
 void GetEcAdc(uint32_t Channel, uint8_t Counter)
 {		
@@ -306,12 +307,12 @@ void GetEcAdc(uint32_t Channel, uint8_t Counter)
 	
 	memset(Adc.Buf, 0, Counter * 2);	
 	
-	for(uint16_t t = 0; t < 50; ++t) ///14us
+	for(uint16_t t = 0; t < 357; ++t) ///14us = 50
 	__NOP();
 	
 	HAL_ADC_Start_DMA(&hadc,Adc.Buf,Counter * 2); //88us
 	
-	for(uint16_t t = 0; t < 450; ++t) ///56us = 200 400
+	for(uint16_t t = 0; t < 400; ++t) ///56us = 200 400
 	__NOP();
 
 	while(!Adc.Complete);
@@ -373,7 +374,7 @@ void EcHandle(uint8_t CollectNum)
 	Adc.EC_HData /= (BUFLEN * counter);
 	Adc.EC_LData /= (BUFLEN * counter);
 		
-	printf("\r\nEH = %d EL = %d\r\n",Adc.EC_HData,Adc.EC_LData);	
+//	printf("\r\nEH = %d EL = %d\r\n",Adc.EC_HData,Adc.EC_LData);	
 	Adc.CollectEcEnable = false;
 }
 

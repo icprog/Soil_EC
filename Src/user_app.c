@@ -14,52 +14,59 @@ uint8_t Rs485Addr = 0;
 void Rs485Init(void)
 {
 	RS485_TO_RX(  );
-	Rs485Addr = 0x02;
+	Rs485Addr = 0x20;
 }
 
 /*
 *Rs485RevceHandle： Rs485数据处理
-*参数：  			 			无
+*参数：  			 			传感器数据
 *返回值：			 			无
 */
-void Rs485RevceHandle(void)
+void Rs485RevceHandle(int16_t *SenSorBuf)
 {
 	uint8_t temp[15] = {0};
 	uint8_t len = 0;
 	
-//	printf("UART_RX_LPUART1.USART_RX_Len = %d\r\n",UART_RX_LPUART1.USART_RX_Len);
-	
+	RS485_TO_TX(  );
+
 	if(CalcCRC16(UART_RX_UART2.USART_RX_BUF,UART_RX_UART2.USART_RX_Len) == 0)
 	{		
 		///判断Rs485功能码
 		switch(UART_RX_UART2.USART_RX_BUF[1])
 		{
-			case 0x03:  ///1：广播处理 0xfe	0x03	0x04	0x00	0x00	0x00	0x00	0xf5	0x3c
-					if(UART_RX_UART2.USART_RX_BUF[0] == 0xFE && UART_RX_UART2.USART_RX_Len == 0x09)
-					{
-						///0xfe	0x03	0x04	Rs485Addr	0x00	0x00	0x00	0xf4	0x84
-						
-						temp[len++] = 0xfe;
-						temp[len++] = 0x03;
-						temp[len++] = 0x04;
+			case 0x03:  ///1：广播处理 fe 03 04 20 00 00 00 FE FC 
+				if(UART_RX_UART2.USART_RX_BUF[0] == 0xFE && UART_RX_UART2.USART_RX_Len == 0x09)
+				{
+					///fe 03 04 20 00 00 00 FE FC 
+					temp[len++] = 0xfe;
+					temp[len++] = 0x03;
+					temp[len++] = 0x04;
+				
+					temp[len++] = Rs485Addr;
+					temp[len++] = 0x00;
+					temp[len++] = 0x00;
+					temp[len++] = 0x00;
+				
+					CalcCRC16(temp,len);
 					
-						temp[len++] = Rs485Addr;
-						temp[len++] = 0x00;
-						temp[len++] = 0x00;
-						temp[len++] = 0x00;
-					
-						CalcCRC16(temp,len);
-					
-						RS485_TO_TX(  );
-						
-						HAL_UART_Transmit(&huart2, temp, (len+2),0xFFFF);	
-					}
-					else if(UART_RX_UART2.USART_RX_BUF[0] == Rs485Addr) ///2：获取数据指令：温度、湿度
-					{
-						///rev: 0x02	0x03	0x00	0x00	0x00	0x02	0xc4	0x38
-						
-						///0x02	0x03	0x04	0xff	0xdd	0x01	0x64	0x69	0x66 (温度、湿度)
-					}
+					HAL_UART_Transmit(&huart2, temp, (len+2),0xFFFF);	
+				}
+				else if(UART_RX_UART2.USART_RX_BUF[0] == Rs485Addr) ///2：获取数据指令：温度*10、EC*1000
+				{
+					///rev: 200300000002C2BA
+					temp[len++] = Rs485Addr;
+					temp[len++] = 0x03;
+					temp[len++] = 0x04;
+				
+					temp[len++] = (SenSorBuf[0]>>8 & 0xff);
+					temp[len++] = (SenSorBuf[0]>>0 & 0xff);
+					temp[len++] = (SenSorBuf[1]>>8 & 0xff);
+					temp[len++] = (SenSorBuf[1]>>0 & 0xff);
+				
+					CalcCRC16(temp,len);
+											
+					HAL_UART_Transmit(&huart2, temp, (len+2),0xFFFF);							
+				}
 			
 				break;
 			
@@ -84,16 +91,15 @@ void Rs485RevceHandle(void)
 					Rs485Addr = temp[6];
 				}
 			
+			
 				break;
 			
 			default:
 				break;		
 		}
-	}
-		
+	}	
 	memset(UART_RX_UART2.USART_RX_BUF, 0, UART_RX_UART2.USART_RX_Len);
-	UART_RX_UART2.USART_RX_Len = 0;
-	
+	UART_RX_UART2.USART_RX_Len = 0;	
 }
 
 /*
@@ -124,6 +130,7 @@ uint16_t CalcCRC16(uint8_t *data, uint8_t len)
 		}
 	}
 	GET_CRC(&(data[len]), result);
+	
 	return result;
 }
 

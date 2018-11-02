@@ -96,6 +96,8 @@ int main(void)
 	uint16_t adc_data[5] = {0};
 	float 	 SensorBuf[5] = {0};
 	
+	int16_t SensorData[2] = {0};
+	
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -132,7 +134,6 @@ int main(void)
 	HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_1);
 		
 	Rs485Init(  );
-	RS485_TO_RX(  );
 
   /* USER CODE END 2 */
 
@@ -149,39 +150,13 @@ int main(void)
 		
 //		if(UART_RX_UART2.USART_RX_Len)
 		{
-			RS485_TO_TX(  );
 			Time = HAL_GetTick(  );
 			
-//			memset(Adc.Buf, 0, BUFLEN*2);
-//					
-//			Adc.PwmEc = false;
-//			Adc.CollectEcEnable = true;
-//			EC_HData = 0;
-//			EC_LData = 0;
-//						
-//			HAL_Delay(3); ///timer = 2.5ms
-
-//			if(Adc.PwmEc)
-//			{
-//				Adc.PwmEc = false;
-//				for(uint8_t i = 0; i < BUFLEN*2; ++i)
-//				{
-//					if(i%2==0)
-//					EC_HData += Adc.Buf[i];	
-//					
-//					if(i%2==1)
-//					EC_LData += Adc.Buf[i];
-//				}			
-//				
-//				EC_HData /= BUFLEN;
-//				EC_LData /= BUFLEN;
-//					
-//				printf("\r\nEH = %d EL = %d\r\n",EC_HData,EC_LData);	
-//				Adc.CollectEcEnable = false;
-//			}			
 			EcHandle( 10 );
+			
 			adc_data[2] = Adc.EC_HData;		
 			adc_data[3] = Adc.EC_LData;	
+			
 			adc_data[0] = GetAdcData(ADC_CHANNEL_VREFINT, BUFLEN); //内部采样
 			
 			adc_data[1] = GetAdcData(ADC_CHANNEL_1, BUFLEN);  ///外部基准
@@ -196,42 +171,51 @@ int main(void)
 						
 			temp = VREFINT_CAL_VREF * Adcdata;
 			
-			printf("内部采样 = %d, 外部基准 = %d  EC_H = %d EC_L = %d 温度 = %d \r\n",adc_data[0], adc_data[1],adc_data[2],adc_data[3],adc_data[4]);
+//			printf("内部采样 = %d, 外部基准 = %d  EC_H = %d EC_L = %d 温度 = %d \r\n",adc_data[0], adc_data[1],adc_data[2],adc_data[3],adc_data[4]);
 			
 			for(uint8_t i = 0, j = 1; i < 4; ++i, ++j)
 			{
 				SensorBuf[i] = (float)(temp*adc_data[j])/(adc_data[0] * VFULL);	
-				
-//				printf("SensorBuf[%d] = %.2f\r\n",i, SensorBuf[i]);
 			}				
 			
-			printf("外部基准 = %.4f 内部基准 = %.4f\r\n", SensorBuf[0],(float)(temp*adc_data[1])/(adc_data[1] * VFULL));
+//			printf("外部基准 = %.4f 内部基准 = %.4f\r\n", SensorBuf[0],(float)(temp*adc_data[1])/(adc_data[1] * VFULL));
+			
+			///温度
+			Tempure = (float)(SensorBuf[3] - VREFEXT_CAL_VREF) * 100;
+			
+			Tempure -= 0.4;							
+				
+			SensorData[0] = (int16_t)((Tempure * 10) + 0.5);
+			
 		 ///EC	
-			printf("EC_H = %.4f EC_L = %.4f\r\n", SensorBuf[1], SensorBuf[2]);
+//			printf("EC_H = %.4f EC_L = %.4f\r\n", SensorBuf[1], SensorBuf[2]);
 					
 			EcSq = SensorBuf[1] - SensorBuf[2];
 						
 			if(EcSq > 0)
 			{
-				RSq = 2 * SensorBuf[2]; ///得到两探针间的电阻差
-				RSq /= EcSq;   ///得到电感值
+//				RSq = 2 * SensorBuf[2]; ///得到两探针间的电阻差，2：2K电阻
+//				RSq /= EcSq;   ///得到电感值
+				
+				float USeq = SensorBuf[2]/EcSq;			
+				float Udata = (100-USeq);
+				
+				if(Udata>0)
+				RSq = USeq*100/Udata;	
+				else
+					RSq = 0;
 			}
 			else
-			RSq = 0;			
-			
-			Tempure = (float)(SensorBuf[3] - VREFEXT_CAL_VREF) * 100;
-			
-			Tempure -= 0.4;
-								
-			printf("EC = %.4f mS/cm 温度 = %.2f°C\r\n", (float)1/(2.5*RSq), Tempure);
-				
-			int16_t TemPureData = (int)((Tempure * 10) + 0.5);
+			RSq = 0;						
 						
-			printf("温度 = %d°C, delay = %d\r\n", TemPureData,HAL_GetTick(  ) - Time);		
-										
-			UART_RX_UART2.USART_RX_Len=0;
+//			printf("EC = %.4f mS/cm 温度 = %.2f°C \r\n", (float)1/(2.5*RSq), Tempure);
 			
-			Rs485RevceHandle(  );
+			SensorData[1] = (int16_t)(((double)1/(2.5*RSq)) * 1000 + 0.5);
+			
+			RS485_TO_TX(  );
+			printf("EC = %d mS/cm 温度 = %d°C, delay = %d\r\n", SensorData[1], SensorData[0],HAL_GetTick(  ) - Time);		
+													
+			Rs485RevceHandle( SensorData );
 			RS485_TO_RX(  );		
 		}				
 		HAL_Delay(1000);

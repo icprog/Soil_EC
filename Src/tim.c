@@ -164,8 +164,6 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 
 /* USER CODE BEGIN 1 */
 
-extern bool 			CollectEc;
-
 /**
   * 函数功能: 非阻塞模式下定时器的回调函数
   * 输入参数: htim：定时器句柄

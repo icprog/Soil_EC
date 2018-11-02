@@ -86,6 +86,8 @@ extern UART_RX UART_RX_UART2;
 
 extern UART_HandleTypeDef huart2;
 
+extern DMA_HandleTypeDef hdma_usart2_rx;
+
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
