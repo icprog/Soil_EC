@@ -34,10 +34,10 @@ void Rs485RevceHandle(int16_t *SenSorBuf)
 		///判断Rs485功能码
 		switch(UART_RX_UART2.USART_RX_BUF[1])
 		{
-			case 0x03:  ///1：广播处理 fe 03 04 20 00 00 00 FE FC 
+			case 0x03:  ///1：广播处理 fe030400000000F53C
 				if(UART_RX_UART2.USART_RX_BUF[0] == 0xFE && UART_RX_UART2.USART_RX_Len == 0x09)
 				{
-					///fe 03 04 20 00 00 00 FE FC 
+					///fe030400000000F53C
 					temp[len++] = 0xfe;
 					temp[len++] = 0x03;
 					temp[len++] = 0x04;
@@ -49,19 +49,23 @@ void Rs485RevceHandle(int16_t *SenSorBuf)
 				
 					CalcCRC16(temp,len);
 					
+					HAL_Delay(200); ///配合主机1s延时
 					HAL_UART_Transmit(&huart2, temp, (len+2),0xFFFF);	
 				}
 				else if(UART_RX_UART2.USART_RX_BUF[0] == Rs485Addr) ///2：获取数据指令：温度*10、EC*1000
 				{
+					memset(SensorData, 0, 2);
+					AdcHandle( );
+					
 					///rev: 200300000002C2BA
 					temp[len++] = Rs485Addr;
 					temp[len++] = 0x03;
 					temp[len++] = 0x04;
 				
-					temp[len++] = (SenSorBuf[0]>>8 & 0xff);
-					temp[len++] = (SenSorBuf[0]>>0 & 0xff);
-					temp[len++] = (SenSorBuf[1]>>8 & 0xff);
-					temp[len++] = (SenSorBuf[1]>>0 & 0xff);
+					temp[len++] = (SensorData[0]>>8 & 0xff);
+					temp[len++] = (SensorData[0]>>0 & 0xff);
+					temp[len++] = (SensorData[1]>>8 & 0xff);
+					temp[len++] = (SensorData[1]>>0 & 0xff);
 				
 					CalcCRC16(temp,len);
 											
@@ -100,6 +104,8 @@ void Rs485RevceHandle(int16_t *SenSorBuf)
 	}	
 	memset(UART_RX_UART2.USART_RX_BUF, 0, UART_RX_UART2.USART_RX_Len);
 	UART_RX_UART2.USART_RX_Len = 0;	
+	
+	Adc.CollectEcEnable = true;
 }
 
 /*

@@ -8,6 +8,7 @@
 #endif	
 
 #include "stm32l0xx_hal.h"
+#include "adc.h"
 	 
 #define RS485_TO_TX(  )					HAL_GPIO_WritePin(Rs485_DE_GPIO_Port, Rs485_DE_Pin, GPIO_PIN_SET)
 #define RS485_TO_RX(  )					HAL_GPIO_WritePin(Rs485_DE_GPIO_Port, Rs485_DE_Pin, GPIO_PIN_RESET)

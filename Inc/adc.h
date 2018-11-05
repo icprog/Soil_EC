@@ -95,6 +95,7 @@ typedef struct u_adc
 	 
 extern adc_t Adc;
 
+extern int16_t SensorData[2];
 
 /* USER CODE END Private defines */
 
@@ -115,6 +116,8 @@ void 		 GetEcHAdc(uint32_t Channel, uint8_t Counter);
 void 		 GetEcLAdc(uint32_t Channel, uint8_t Counter);
 
 void 		 EcHandle(uint8_t CollectNum);
+
+void 		 AdcHandle(void);
 
 void		 Bublesort(uint32_t *a,uint8_t n);
 
