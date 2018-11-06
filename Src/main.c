@@ -131,10 +131,12 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */		
+		RS485_TO_TX(  );
 		
+		Time = HAL_GetTick(  );
 		AdcHandle(  );
 		
-//		HAL_Delay(1000);
+		RS485_TO_RX(  );
 		
 #if 1
 		
@@ -146,8 +148,9 @@ int main(void)
 			RS485_TO_RX(  );		
 		}			
 		
-//		Time = 0;
 #endif
+
+		HAL_Delay(1000 - (HAL_GetTick(  ) - Time));
 
   }
   /* USER CODE END 3 */

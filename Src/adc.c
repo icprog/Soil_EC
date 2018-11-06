@@ -395,18 +395,44 @@ void AdcHandle(void)
 	
 	uint16_t adc_data[5] = {0};
 	float 	 SensorBuf[5] = {0};
+	
+	uint32_t MuilpData = 0;
+	
+	uint8_t counter = 0;
 			
 	EcHandle( 10 );
 			
 	adc_data[2] = Adc.EC_HData;		
 	adc_data[3] = Adc.EC_LData;	
 	
-	adc_data[0] = GetAdcData(ADC_CHANNEL_VREFINT, BUFLEN); //内部采样
+//	HAL_TIM_Base_Stop_IT(&htim2);
+//	HAL_TIM_PWM_Stop(&htim2,TIM_CHANNEL_1);
 	
-	adc_data[1] = GetAdcData(ADC_CHANNEL_1, BUFLEN);  ///外部基准
+		///复合滤波算法
+	for(counter = 0; counter < 20; ++counter) ///均值
+	{
+		MuilpData += GetAdcData(ADC_CHANNEL_VREFINT, BUFLEN); //内部采样
+	}
+	adc_data[0] = MuilpData/counter;
+	MuilpData = 0;
 	
-	adc_data[4] = GetAdcData(ADC_CHANNEL_6, BUFLEN); ///温度
+	for(counter = 0; counter < 20; ++counter) ///均值
+	{
+		MuilpData += GetAdcData(ADC_CHANNEL_1, BUFLEN);  ///外部基准
+	}
+	adc_data[1] = MuilpData/counter;
+	MuilpData = 0;
+	
+	for(counter = 0; counter < 20; ++counter) ///均值
+	{
+		MuilpData += GetAdcData(ADC_CHANNEL_6, BUFLEN); ///温度
+	}
+	adc_data[4] = MuilpData/counter; 
+	MuilpData = 0;
 							
+//	HAL_TIM_Base_Start_IT(&htim2);
+//	HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_1);
+	
 	Vchannel = VFULL * adc_data[0] * VREFEXT_CAL_VREF;
 	
 	Adcdata = (VREFINT_CAL_VREF * adc_data[1]);					
@@ -425,8 +451,8 @@ void AdcHandle(void)
 //			printf("外部基准 = %.4f 内部基准 = %.4f\r\n", SensorBuf[0],(float)(temp*adc_data[1])/(adc_data[1] * VFULL));
 	
 	///温度
-	Tempure = (float)(SensorBuf[2] - VREFEXT_CAL_VREF) * 100;
-	printf("温度00 = %.3f°C %.1f\r\n ",Tempure,(float)Para.Data/100);
+	Tempure = (float)(SensorBuf[3] - VREFEXT_CAL_VREF) * 100;
+//	printf("温度00 = %.3f°C %.1f\r\n ",Tempure,(float)Para.Data/100);
 	///温度补偿		
 	if(Para.Positive)
 	{
@@ -436,7 +462,7 @@ void AdcHandle(void)
 	{
 		Tempure -= (float)Para.Data/100;
 	}		
-	printf("温度11 = %.3f°C\r\n ",Tempure);		
+//	printf("温度11 = %.3f°C\r\n ",Tempure);		
 	
 	SensorData[0] = (int16_t)((Tempure * 10) + 0.5);
 	
@@ -465,8 +491,7 @@ void AdcHandle(void)
 	
 	SensorData[1] = (int16_t)(((double)1/(2.5*RSq)) * 1000 + 0.5);
 	
-	printf("EC = %d mS/cm 温度 = %d°C\r\n", SensorData[1], SensorData[0]);		
-
+	printf("\r\n温度 = %d°C EC = %d dS/m \r\n", SensorData[0], SensorData[1]);		
 }
 
 #if 0
