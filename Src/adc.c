@@ -47,9 +47,11 @@
 
 #include <string.h>
 #include <stdbool.h>
+#include "usart.h"
 
 adc_t Adc = {0, {0}, 0, 0, false, false, false};
 
+para_t Para = {0, true};
 
 /* USER CODE END 0 */
 
@@ -393,7 +395,7 @@ void AdcHandle(void)
 	
 	uint16_t adc_data[5] = {0};
 	float 	 SensorBuf[5] = {0};
-		
+			
 	EcHandle( 10 );
 			
 	adc_data[2] = Adc.EC_HData;		
@@ -423,10 +425,19 @@ void AdcHandle(void)
 //			printf("外部基准 = %.4f 内部基准 = %.4f\r\n", SensorBuf[0],(float)(temp*adc_data[1])/(adc_data[1] * VFULL));
 	
 	///温度
-	Tempure = (float)(SensorBuf[3] - VREFEXT_CAL_VREF) * 100;
+	Tempure = (float)(SensorBuf[2] - VREFEXT_CAL_VREF) * 100;
+	printf("温度00 = %.3f°C %.1f\r\n ",Tempure,(float)Para.Data/100);
+	///温度补偿		
+	if(Para.Positive)
+	{
+		Tempure += (float)Para.Data/100;
+	}
+	else
+	{
+		Tempure -= (float)Para.Data/100;
+	}		
+	printf("温度11 = %.3f°C\r\n ",Tempure);		
 	
-	Tempure -= 0.4;							
-		
 	SensorData[0] = (int16_t)((Tempure * 10) + 0.5);
 	
  ///EC	
@@ -454,8 +465,7 @@ void AdcHandle(void)
 	
 	SensorData[1] = (int16_t)(((double)1/(2.5*RSq)) * 1000 + 0.5);
 	
-//			RS485_TO_TX(  );
-//			printf("EC = %d mS/cm 温度 = %d°C, delay = %d\r\n", SensorData[1], SensorData[0],HAL_GetTick(  ) - Time);		
+	printf("EC = %d mS/cm 温度 = %d°C\r\n", SensorData[1], SensorData[0]);		
 
 }
 

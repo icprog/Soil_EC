@@ -131,10 +131,12 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */		
-
-#if 1		
 		
 		AdcHandle(  );
+		
+//		HAL_Delay(1000);
+		
+#if 1
 		
 		if(UART_RX_UART2.USART_RX_Len)
 		{
@@ -142,7 +144,8 @@ int main(void)
 													
 			Rs485RevceHandle( SensorData );
 			RS485_TO_RX(  );		
-		}				
+		}			
+		
 //		Time = 0;
 #endif
 

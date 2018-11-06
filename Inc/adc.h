@@ -93,7 +93,15 @@ typedef struct u_adc
 //	uint32_t LBuf[BUFLEN];
 }adc_t;
 	 
-extern adc_t Adc;
+typedef struct u_para
+{
+	uint16_t Data;	
+	bool  	 Positive; 
+}para_t;
+	 
+extern adc_t 	Adc;
+
+extern para_t Para;
 
 extern int16_t SensorData[2];
 

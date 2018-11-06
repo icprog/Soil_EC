@@ -55,6 +55,8 @@
 
 #define __HAL_DMA_SET_COUNTER(__HANDLE__, __COUNTER__) ((__HANDLE__)->Instance->CNDTR = (uint16_t)(__COUNTER__))/* USER CODE END Includes */
 	 
+#define RS485_TO_TX(  )					HAL_GPIO_WritePin(Rs485_DE_GPIO_Port, Rs485_DE_Pin, GPIO_PIN_SET)
+#define RS485_TO_RX(  )					HAL_GPIO_WritePin(Rs485_DE_GPIO_Port, Rs485_DE_Pin, GPIO_PIN_RESET)	 
 
 #define RXBUFFERSIZE   1 //ª∫¥Ê¥Û–°
 
